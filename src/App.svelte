@@ -1,15 +1,19 @@
 
 <script lang="ts">
+  import { match, P } from 'ts-pattern';
   import LeftBar from './lib/LeftBar.svelte';
   import CommandUINode from './lib/CommandUINode.svelte';
+  import RunnerBar from './lib/RunnerBar.svelte'
 
   import { SvelteFlow, Background } from '@xyflow/svelte';
 
   import { CommandGraph } from './lib/graph.ts';
 
-  import { CommandTree } from './lib/syntax.ts';
- 
+  import { CommandTree, SyntaxTree } from './lib/syntax.ts';
+
   import '@xyflow/svelte/dist/style.css';
+
+  let runnerText = $state({ type: 'ok', content: ':v'});
  
   let uiNodes = $state.raw([
     {
@@ -37,10 +41,6 @@
   ]);
  
   let uiEdges = $state.raw([
-    { id: 'aaa',
-      source: 'randomfloat',
-      target: 'mathsqrt',
-    },
   ]);
 
   const nodeTypes = {
@@ -48,16 +48,25 @@
   };
 
   function run() {
-
     const graph = CommandGraph.commandGraphFromUIGraph(uiNodes, uiEdges);
-
     const commandTree = graph.toCommandTree();
 
-    const syntaxTree = CommandTree.toSyntaxTree(commandTree);
-    
-    console.log({ graph });
-    console.log({ commandTree });
-    console.log({ syntaxTree });
+    match(commandTree)
+      .with({type: 'error'}, error => {
+        runnerText = { type: 'error', content: error.message };
+      })
+      .with(P._, tree => {
+        const syntaxTree = CommandTree.toSyntaxTree(tree);
+        const source = SyntaxTree.toNushellSource(syntaxTree);
+
+        console.log({ graph });
+        console.log({ commandTree });
+        console.log({ syntaxTree });
+        console.log({ syntaxTree });
+        console.log({ source });
+
+        runnerText = { type: 'ok' , content: source};
+      });
   }
 
 </script>
@@ -65,20 +74,24 @@
 <main>
   <LeftBar />
 
-  <section class="canvas">
-    <SvelteFlow
-        bind:nodes={uiNodes}
-        bind:edges={uiEdges}
-        nodeTypes={nodeTypes}
-        fitView>
-      <Background />
-    </SvelteFlow>
+  <div class="right-container">
 
-    <button class="run-button" onclick={run}>
-      Run
-    </button>
-  </section>
+    <div class="canvas">
+      
+      <SvelteFlow
+          bind:nodes={uiNodes}
+          bind:edges={uiEdges}
+          nodeTypes={nodeTypes}
+          fitView>
+        <Background />
+      </SvelteFlow>
 
+    </div>
+
+    <RunnerBar
+       text={runnerText}
+       onRunClick={run} />
+  </div>
 
 </main>
 
@@ -90,21 +103,14 @@
     flex-grow: 1;
   }
 
+  .right-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
   main  {
     height: 100vh;
     display: flex;
-  }
-
-  .run-button {
-    position: absolute;
-    right: 0px;
-    bottom: 0px;
-    margin-right: 40px;
-    margin-bottom: 40px;
-    font-size: 1.5em;
-    border-radius: 10px;
-    border: 1px solid black;
-    padding-left: 20px;
-    padding-right: 20px;
   }
 </style>

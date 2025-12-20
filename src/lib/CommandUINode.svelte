@@ -6,10 +6,11 @@
 </script>
 
 <div class="command-node">
-  { data.label } ?
+  { data.label }
 </div>
 
 <!--
+Code for multiple top handles with varying positions
 <Handle type="target" position={Position.Top} id="a" style="left: 80%" />
 <Handle type="target" position={Position.Top} id="b" style="left: 20%" />
 -->

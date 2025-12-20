@@ -1,7 +1,6 @@
 
 import { type CommandTree } from './syntax';
 
-
 type NodeId = string;
 
 type CommandNode =
@@ -19,17 +18,13 @@ export class CommandGraph {
     private sources: Map<NodeId, NodeId[]>
   ) { }
 
-  static commandGraphFromUIGraph(uiNodes: any, uiEdges: any): CommandGraph | null {
+  static commandGraphFromUIGraph(uiNodes: any, uiEdges: any): CommandGraph {
     const nodeInfo: Map<NodeId, CommandNode> = new Map();
     const targets: Map<NodeId, NodeId[]> = new Map();
     const sources: Map<NodeId, NodeId[]> = new Map();
 
     for (let uiNode of uiNodes) {
-      const node =  commandNodeFromUINode(uiNode);
-
-      if (node == null) {
-        return null;
-      }
+      const node = commandNodeFromUINode(uiNode);
 
       nodeInfo.set(uiNode.id, node);
       targets.set(uiNode.id, []);
@@ -47,16 +42,15 @@ export class CommandGraph {
     return new CommandGraph(nodeInfo,  sources);
   }
 
-  toCommandTree(): CommandTree {
+  toCommandTree(): CommandTree | { type: 'error', message: string } {
     let resultSources = this.sources.get('result') ?? panic('result node not in graph');
 
     if (resultSources.length == 0) {
-      // TODO: make this error part of the API
-      panic('no node is linked to the result node');
+      return { type: 'error', message: 'no node is linked to the result node'};
     }
 
     if (resultSources.length > 1) {
-      panic('too many nodes linked to result node');
+      return { type: 'error', message: 'too many nodes linked to result node'};
     }
 
     let rootID = resultSources[0];
