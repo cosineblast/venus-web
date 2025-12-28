@@ -16,7 +16,12 @@
 
   import '@xyflow/svelte/dist/style.css';
 
-  let runnerText = $state({ type: 'ok', content: ':v'});
+  const nodeTypes = {
+    command: CommandUINode,
+    result: ResultUINode
+  };
+
+  // MARK: Model
  
   let uiNodes = $state.raw([
     {
@@ -42,14 +47,16 @@
       type: 'result'
     },
   ]);
- 
-  let uiEdges = $state.raw([
-  ]);
 
-  const nodeTypes = {
-    command: CommandUINode,
-    result: ResultUINode
-  };
+  let uiEdges = $state.raw([]);
+
+  let runnerText = $state({ type: 'ok', content: ':v'});
+
+  let leftBarCommands = $state(null);
+
+  let leftBarCategory = $state('commands');
+
+  // MARK: Update
 
   async function run() {
     const graph = CommandGraph.commandGraphFromUIGraph(uiNodes, uiEdges);
@@ -81,10 +88,32 @@
       });
   }
 
+  function onCategoryClick(category: string) {
+    leftBarCategory = category;
+  }
+
+  // MARK: Initialization
+
+  async function init() {
+    let commands = await nushell.getNushellCommands();
+
+    console.log(commands);
+
+    leftBarCommands = commands.map((command: any) => ({
+      name: command.name,
+      category: command.category
+    }));
+  }
+
+  init().then();
+
 </script>
 
 <main>
-  <LeftBar />
+  <LeftBar
+    commands={leftBarCommands}
+    category={leftBarCategory}
+    onCategoryClick={onCategoryClick} />
 
   <div class="right-container">
 

@@ -35,3 +35,8 @@ export async function executeNushell(source: string): Promise<Result> {
     .with({ type: 'success'}, result => ({type: 'ok' as const, result: JSON.parse(result.value_json)}))
     .exhaustive()
 }
+
+export async function getNushellCommands(): Promise<any> {
+  const response = await fetch('/nu_commands.json')
+  return response.json()
+}
