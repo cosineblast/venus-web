@@ -7,9 +7,11 @@
 
   import { SvelteFlow, Background } from '@xyflow/svelte';
 
-  import { CommandGraph } from './lib/graph.ts';
+  import { CommandGraph } from './lib/graph';
 
-  import { CommandTree, SyntaxTree } from './lib/syntax.ts';
+  import { CommandTree, SyntaxTree } from './lib/syntax';
+
+  import * as nushell from './lib/nushellRunner';
 
   import '@xyflow/svelte/dist/style.css';
 
@@ -47,25 +49,33 @@
     command: CommandUINode
   };
 
-  function run() {
+  async function run() {
     const graph = CommandGraph.commandGraphFromUIGraph(uiNodes, uiEdges);
     const commandTree = graph.toCommandTree();
 
     match(commandTree)
-      .with({type: 'error'}, error => {
+      .with({type: 'error'}, async (error) => {
         runnerText = { type: 'error', content: error.message };
       })
-      .with(P._, tree => {
+      .with(P._, async (tree) => {
         const syntaxTree = CommandTree.toSyntaxTree(tree);
         const source = SyntaxTree.toNushellSource(syntaxTree);
 
         console.log({ graph });
         console.log({ commandTree });
         console.log({ syntaxTree });
-        console.log({ syntaxTree });
         console.log({ source });
 
-        runnerText = { type: 'ok' , content: source};
+        runnerText = { type: 'ok' , content: `Running ${source}...`};
+
+        const result = await nushell.executeNushell(source);
+
+        if (result.type == 'ok') {
+          runnerText = { type: 'ok' , content: result.result};
+        } else {
+          runnerText = { type: 'error', content: result.message };
+        }
+
       });
   }
 
