@@ -3,6 +3,7 @@
   import { match, P } from 'ts-pattern';
   import LeftBar from './lib/LeftBar.svelte';
   import CommandUINode from './lib/CommandUINode.svelte';
+  import ResultUINode from './lib/ResultUINode.svelte';
   import RunnerBar from './lib/RunnerBar.svelte'
 
   import { SvelteFlow, Background } from '@xyflow/svelte';
@@ -38,7 +39,7 @@
     { id: 'result',
       position: { x: 0, y: 200 },
       data: { label: 'Result' },
-      type: 'output'
+      type: 'result'
     },
   ]);
  
@@ -46,7 +47,8 @@
   ]);
 
   const nodeTypes = {
-    command: CommandUINode
+    command: CommandUINode,
+    result: ResultUINode
   };
 
   async function run() {
