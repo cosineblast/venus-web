@@ -30,11 +30,12 @@
 
   display: flex;
   flex-direction: row;
+
+  height: 100%;
 }
 
 .code-result {
-  overflow: scroll;
-  font: 'Ubuntu Mono', monospace;
+  overflow: auto;
 }
 
 .run-button {

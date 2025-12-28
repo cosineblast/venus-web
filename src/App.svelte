@@ -5,6 +5,7 @@
   import CommandUINode from './lib/CommandUINode.svelte';
   import ResultUINode from './lib/ResultUINode.svelte';
   import RunnerBar from './lib/RunnerBar.svelte'
+  import { PaneGroup, Pane, PaneResizer } from 'paneforge';
 
   import { SvelteFlow, Background } from '@xyflow/svelte';
 
@@ -110,46 +111,47 @@
 </script>
 
 <main>
-  <LeftBar
-    commands={leftBarCommands}
-    category={leftBarCategory}
-    onCategoryClick={onCategoryClick} />
 
-  <div class="right-container">
+  <PaneGroup direction="horizontal">
+    <Pane defaultSize={25}>
+      <LeftBar
+        commands={leftBarCommands}
+        category={leftBarCategory}
+        onCategoryClick={onCategoryClick} />
+    </Pane>
 
-    <div class="canvas">
-      
-      <SvelteFlow
-          bind:nodes={uiNodes}
-          bind:edges={uiEdges}
-          nodeTypes={nodeTypes}
-          fitView>
-        <Background />
-      </SvelteFlow>
+    <PaneResizer style="border: 3px solid gray;" />
 
-    </div>
+    <Pane>
+      <PaneGroup direction="vertical">
 
-    <RunnerBar
-       text={runnerText}
-       onRunClick={run} />
-  </div>
+        <Pane>
+            <SvelteFlow
+                bind:nodes={uiNodes}
+                bind:edges={uiEdges}
+                nodeTypes={nodeTypes}
+                fitView>
+              <Background />
+            </SvelteFlow>
+        </Pane>
+
+        <PaneResizer style="border: 3px solid gray;" />
+
+        <Pane defaultSize={10}>
+          <RunnerBar
+             text={runnerText}
+             onRunClick={run} />
+        </Pane>
+
+      </PaneGroup>
+    </Pane>
+  </PaneGroup>
 
 </main>
 
 
 
 <style>
-
-  .canvas {
-    flex-grow: 1;
-  }
-
-  .right-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
   main  {
     height: 100vh;
     display: flex;

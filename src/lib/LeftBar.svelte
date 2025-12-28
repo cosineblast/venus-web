@@ -60,9 +60,7 @@ const { commands, category, onCategoryClick } = $props();
 
 <style>
   aside  {
-    border-right: 1px solid black;
     height: 100vh;
-    width: 20vw;
     padding: 10px;
     display: flex;
     flex-direction: column;
