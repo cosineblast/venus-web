@@ -5,7 +5,7 @@ import * as z from 'zod';
 
 export type Result = {
   type: 'ok',
-  result: any,
+  value: any,
 } | {
   type: 'error',
   message: string
@@ -33,7 +33,7 @@ export async function executeNushell(source: string): Promise<Result> {
   return match(result)
     .with({ type: 'serialize_failure' }, () => ({ type: 'error' as const, message: 'Computation succeeded, but the result value cannot be displayed :/'}))
     .with({ type: 'failure'}, err => ({ type: 'error' as const, message: err.error_json }))
-    .with({ type: 'success'}, result => ({type: 'ok' as const, result: JSON.parse(result.value_json)}))
+    .with({ type: 'success'}, result => ({type: 'ok' as const, value: JSON.parse(result.value_json)}))
     .exhaustive()
 }
 
@@ -59,7 +59,7 @@ export async function getNushellCommands(): Promise<CommandList> {
   const result = await executeNushell('help commands | where command_type == built-in | where category != core | where category != "debug"');
 
   if (result.type == 'ok') {
-    return CommandList.parse(result.result);
+    return CommandList.parse(result.value);
   } else {
     // TODO: return UI error message in this case
     console.log('crap...');

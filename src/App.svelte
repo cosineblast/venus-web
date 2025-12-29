@@ -96,7 +96,7 @@
         const result = await nushell.executeNushell(source);
 
         if (result.type == 'ok') {
-          runnerText = { type: 'ok' , content: result.result};
+          runnerText = { type: 'ok' , content: result.value};
         } else {
           runnerText = { type: 'error', content: result.message };
         }
