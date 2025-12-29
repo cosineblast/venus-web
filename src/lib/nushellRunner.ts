@@ -55,7 +55,21 @@ export type Command = z.infer<typeof Command>;
 export type CommandList = z.infer<typeof CommandList>;
 
 export async function getNushellCommands(): Promise<CommandList> {
+
+  const result = await executeNushell('help commands | where command_type == built-in | where category != core | where category != "debug"');
+
+  if (result.type == 'ok') {
+    return CommandList.parse(result.result);
+  } else {
+    // TODO: return UI error message in this case
+    console.log('crap...');
+  }
+
+  
   const response = await fetch('/nu_commands.json')
   return CommandList.parse(await response.json())
 }
 
+export function commandMatches(command: Command, filter: string): boolean {
+  return filter == '' || command.name.includes(filter) || command.category.includes(filter);
+}

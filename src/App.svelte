@@ -52,7 +52,7 @@
     if (baseCommands == null) {
       return null
     } else {
-      return baseCommands.filter(command => commandMatches(command, searchBarValue)).map(command => ({
+      return baseCommands.filter(command => nushell.commandMatches(command, searchBarValue)).map(command => ({
         name: command.name,
         category: command.category
       }))
@@ -68,10 +68,6 @@
     let commands = await nushell.getNushellCommands();
 
     baseCommands = commands;
-  }
-  // TODO: move to nushell module
-  function commandMatches(command: nushell.Command, filter: string): boolean {
-    return filter == '' || command.name.includes(filter) || command.category.includes(filter);
   }
 
   init().then();
