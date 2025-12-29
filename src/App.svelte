@@ -1,10 +1,10 @@
 
 <script lang="ts">
   import { match, P } from 'ts-pattern';
-  import LeftBar, { type Command as LeftBarCommand } from './lib/LeftBar.svelte';
-  import CommandUINode from './lib/CommandUINode.svelte';
-  import ResultUINode from './lib/ResultUINode.svelte';
-  import RunnerBar from './lib/RunnerBar.svelte'
+  import LeftBar, { type Command as LeftBarCommand } from './ui/LeftBar.svelte';
+  import CommandUINode from './ui/CommandUINode.svelte';
+  import ResultUINode from './ui/ResultUINode.svelte';
+  import RunnerBar from './ui/RunnerBar.svelte'
   import { PaneGroup, Pane, PaneResizer } from 'paneforge';
 
   import { SvelteFlow, Background } from '@xyflow/svelte';
