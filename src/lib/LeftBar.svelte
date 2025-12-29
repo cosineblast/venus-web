@@ -10,7 +10,7 @@ export type Command  = {
 
 <script lang="ts">
 
-const { commands, category, onCategoryClick } = $props();
+const { commands, category, onCategoryClick, onCommandClick } = $props();
 
 </script>
 
@@ -40,11 +40,11 @@ const { commands, category, onCategoryClick } = $props();
 
     <command-list>
 
-      {#each commands as command (command.name)}
-        <command-item>
+      {#each commands as command, i (command.name)}
+        <button onclick={() => onCommandClick(i)}>
           <span> {command.name} </span>
           <span> {command.category} </span>
-        </command-item>
+        </button>
       {/each}
 
     </command-list>
@@ -83,13 +83,14 @@ const { commands, category, onCategoryClick } = $props();
   }
 
   command-list {
-    display: block;
+    display: flex;
     overflow-y: auto;
     padding-left: 10px;
     padding-right: 10px;
+    flex-direction: column;
   }
 
-  command-item {
+  command-list > button {
     display: flex;
     justify-content: space-between;
 
@@ -103,11 +104,11 @@ const { commands, category, onCategoryClick } = $props();
     transition: border-color 0.1s;
   }
 
-  command-item:hover {
+  command-list > button:hover {
     border: 1px solid black;
   }
 
-  command-item > span:last-child {
+  command-list > button > span:last-child {
     color: gray;
   }
 

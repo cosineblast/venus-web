@@ -53,9 +53,22 @@
 
   let runnerText = $state({ type: 'ok', content: ':v'});
 
-  let leftBarCommands = $state(null);
+  let leftBarCommands: null | [any] = $state(null);
 
   let leftBarCategory = $state('commands');
+
+  // MARK: Initialization
+
+  async function init() {
+    let commands = await nushell.getNushellCommands();
+
+    leftBarCommands = commands.map((command: any) => ({
+      name: command.name,
+      category: command.category
+    }));
+  }
+
+  init().then();
 
   // MARK: Update
 
@@ -93,20 +106,29 @@
     leftBarCategory = category;
   }
 
-  // MARK: Initialization
+  function onCommandItemClick(index: number) {
+    let commands = $state.snapshot(leftBarCommands);
+    
+    if (commands == null) {
+      return;
+    }
 
-  async function init() {
-    let commands = await nushell.getNushellCommands();
+    let command = commands[index];
 
-    console.log(commands);
 
-    leftBarCommands = commands.map((command: any) => ({
-      name: command.name,
-      category: command.category
-    }));
+    uiNodes = [...uiNodes, 
+      { id: self.crypto.randomUUID(),
+        position: { x: 0, y: 0 }, // TODO: find center of viewport
+        data: {
+          label: command.name,
+          hasInput: false
+        },
+        type: 'command'
+      }
+    ];
+
   }
 
-  init().then();
 
 </script>
 
@@ -117,7 +139,8 @@
       <LeftBar
         commands={leftBarCommands}
         category={leftBarCategory}
-        onCategoryClick={onCategoryClick} />
+        onCategoryClick={onCategoryClick}
+        onCommandClick={onCommandItemClick} />
     </Pane>
 
     <PaneResizer style="border: 3px solid gray;" />
