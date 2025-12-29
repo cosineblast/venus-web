@@ -13,7 +13,7 @@
 
   import { CommandTree, SyntaxTree } from './lib/syntax';
 
-  import * as nushell from './lib/nushellRunner';
+  import * as nushell from './lib/nushell';
 
   import '@xyflow/svelte/dist/style.css';
 
