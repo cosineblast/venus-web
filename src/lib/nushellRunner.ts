@@ -38,28 +38,30 @@ export async function executeNushell(source: string): Promise<Result> {
 }
 
 
-const Command = z.object({
+const CommandSchema = z.object({
   name: z.string(),
   category: z.string(),
   command_type: z.string(),
   description: z.string(),
   params: z.unknown(),
-  input_output: z.unknown(),
+  input_output: z.array(z.object({
+    input: z.string(),
+    output: z.string()
+  })),
   search_terms: z.string(),
 });
+export type Command = z.infer<typeof CommandSchema>;
 
-const CommandList = z.array(Command);
+const CommandListSchema = z.array(CommandSchema);
 
-
-export type Command = z.infer<typeof Command>;
-export type CommandList = z.infer<typeof CommandList>;
+export type CommandList = z.infer<typeof CommandListSchema>;
 
 export async function getNushellCommands(): Promise<CommandList> {
 
   const result = await executeNushell('help commands | where command_type == built-in | where category != core | where category != "debug"');
 
   if (result.type == 'ok') {
-    return CommandList.parse(result.value);
+    return CommandListSchema.parse(result.value);
   } else {
     // TODO: return UI error message in this case
     console.log('crap...');
@@ -67,9 +69,21 @@ export async function getNushellCommands(): Promise<CommandList> {
 
   
   const response = await fetch('/nu_commands.json')
-  return CommandList.parse(await response.json())
+  return CommandListSchema.parse(await response.json())
 }
 
-export function commandMatches(command: Command, filter: string): boolean {
-  return filter == '' || command.name.includes(filter) || command.category.includes(filter);
+export namespace Command {
+  export function matchesFilter(command: Command, filter: string): boolean {
+    return filter == '' || command.name.includes(filter) || command.category.includes(filter);
+  }
+
+  export function hasInput(command: Command): boolean {
+    if (command.input_output.length == 0) {
+      return false;
+    }
+
+    return command.input_output.some(signature => signature.input != 'nothing')
+  }
+
+  
 }

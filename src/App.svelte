@@ -25,16 +25,8 @@
   // MARK: Model
  
   let uiNodes = $state.raw([
-    { id: 'mathsqrt',
-      type: 'command',
-      position: { x: 0, y: 100 },
-      data: {
-        label: 'math sqrt',
-        hasInput: true
-      }
-    },
     { id: 'result',
-      position: { x: 0, y: 200 },
+      position: { x: 0, y: 100 },
       data: { label: 'Result' },
       type: 'result'
     },
@@ -52,7 +44,8 @@
     if (baseCommands == null) {
       return null
     } else {
-      return baseCommands.filter(command => nushell.commandMatches(command, searchBarValue)).map(command => ({
+      return baseCommands.filter(command => nushell.Command.matchesFilter(command, searchBarValue)).map(command => ({
+
         name: command.name,
         category: command.category
       }))
@@ -109,21 +102,21 @@
   }
 
   function onCommandItemClick(index: number) {
-    let commands = $state.snapshot(leftBarCommands);
     
-    if (commands == null) {
+    if (leftBarCommands == null || baseCommands == null) {
       return;
     }
 
-    let command = commands[index];
+    const commandName = leftBarCommands[index].name;
 
+    let baseCommand = baseCommands.filter(command => command.name == commandName)[0];
 
     uiNodes = [...uiNodes, 
       { id: self.crypto.randomUUID(),
         position: { x: 0, y: 0 }, // TODO: find center of viewport
         data: {
-          label: command.name,
-          hasInput: false
+          label: baseCommand.name,
+          hasInput: nushell.Command.hasInput(baseCommand)
         },
         type: 'command'
       }
