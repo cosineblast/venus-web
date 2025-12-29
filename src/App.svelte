@@ -25,15 +25,6 @@
   // MARK: Model
  
   let uiNodes = $state.raw([
-    {
-      id: 'randomfloat',
-      type: 'command',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'random float',
-        hasInput: false
-      }
-    },
     { id: 'mathsqrt',
       type: 'command',
       position: { x: 0, y: 100 },
@@ -53,7 +44,7 @@
 
   let runnerText = $state({ type: 'ok', content: ':v'});
 
-  let leftBarCommands: null | [any] = $state(null);
+  let leftBarCommands: null | any[] = $state(null);
 
   let leftBarCategory = $state('commands');
 

@@ -1,5 +1,9 @@
 
-type Result = {
+import { match } from 'ts-pattern'
+import * as wasm_wrapper from '../nu/venus_wrapper'
+import * as z from 'zod';
+
+export type Result = {
   type: 'ok',
   result: any,
 } | {
@@ -19,9 +23,6 @@ type RawNushellResult = {
 
 
  
-import { match } from 'ts-pattern'
-import * as wasm_wrapper from '../nu/venus_wrapper'
-
 
 export async function executeNushell(source: string): Promise<Result> {
   await wasm_wrapper.default().then();
@@ -36,7 +37,25 @@ export async function executeNushell(source: string): Promise<Result> {
     .exhaustive()
 }
 
-export async function getNushellCommands(): Promise<any> {
+
+const Command = z.object({
+  name: z.string(),
+  category: z.string(),
+  command_type: z.string(),
+  description: z.string(),
+  params: z.unknown(),
+  input_output: z.unknown(),
+  search_terms: z.string(),
+});
+
+const CommandList = z.array(Command);
+
+
+export type Command = z.infer<typeof Command>;
+export type CommandList = z.infer<typeof CommandList>;
+
+export async function getNushellCommands(): Promise<CommandList> {
   const response = await fetch('/nu_commands.json')
-  return response.json()
+  return CommandList.parse(await response.json())
 }
+

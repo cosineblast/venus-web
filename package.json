@@ -22,6 +22,7 @@
     "@xyflow/svelte": "^1.5.0",
     "normalize.css": "^8.0.1",
     "paneforge": "^1.0.2",
-    "ts-pattern": "^5.9.0"
+    "ts-pattern": "^5.9.0",
+    "zod": "^4.2.1"
   }
 }
