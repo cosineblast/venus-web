@@ -11,8 +11,11 @@ You can run the development build by cloning the repo and executing `npm run dev
 However, it is likely the web application won't work, because it requries the
 `.wasm` nushell binary and its JS bindings.
 
-This can be accomplished by following the build instructions of **TODO: venus-nushell here**
-and moving the generated package to `src/nu`.
+This can be accomplished by following the build instructions of
+the [nushell fork](https://github.com/cosineblast/venus-nushell)
+and moving the generated `pkg` directory inside the `venus-wrapper` crate into `src/nu`.
+
+i.e `mv $nushell_fork/crates/venus-wrapper/pkg ./src/nu`
 
 
 
