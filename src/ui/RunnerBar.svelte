@@ -36,6 +36,7 @@
 
 .code-result {
   overflow: auto;
+  white-space: pre-wrap;
 }
 
 .run-button {

@@ -2,12 +2,15 @@
 <script lang="ts">
   import { match, P } from 'ts-pattern';
   import LeftBar, { type Command as LeftBarCommand } from './ui/LeftBar.svelte';
+
   import CommandUINode from './ui/CommandUINode.svelte';
   import ResultUINode from './ui/ResultUINode.svelte';
+  import DataUINode from './ui/DataUINode.svelte';
+
   import RunnerBar from './ui/RunnerBar.svelte'
   import { PaneGroup, Pane, PaneResizer } from 'paneforge';
 
-  import { SvelteFlow, Background } from '@xyflow/svelte';
+  import { SvelteFlow, Background, type NodeTypes } from '@xyflow/svelte';
 
   import { CommandGraph } from './lib/graph';
 
@@ -17,19 +20,29 @@
 
   import '@xyflow/svelte/dist/style.css';
 
-  const nodeTypes = {
+  const nodeTypes: NodeTypes = {
     command: CommandUINode,
-    result: ResultUINode
+    result: ResultUINode,
+    data: DataUINode
   };
 
   // MARK: Model
  
-  let uiNodes = $state.raw([
+  let uiNodes: any = $state.raw([
     { id: 'result',
       position: { x: 0, y: 100 },
       data: { label: 'Result' },
       type: 'result'
     },
+    {
+      id: 'data',
+      position: { x: 0, y: 0 },
+      data: {
+        text: 10,
+        literalType: 'int'
+       },
+      type: 'data'
+    }
   ]);
 
   let uiEdges = $state.raw([]);

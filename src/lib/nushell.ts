@@ -25,7 +25,7 @@ type RawNushellResult = {
  
 
 export async function executeNushell(source: string): Promise<Result> {
-  await wasm_wrapper.default().then();
+  await wasm_wrapper.default();
 
   // TODO: use zod
   const result: RawNushellResult = wasm_wrapper.execute(source);
@@ -84,6 +84,13 @@ export namespace Command {
 
     return command.input_output.some(signature => signature.input != 'nothing')
   }
+}
 
-  
+export type AtomicLiteralType = 'int' | 'float' | 'string' | 'duration' | 'filesize' | 'boolean' | 'datetime';
+
+export async function literalIsOk(literal: string, literalType: AtomicLiteralType): Promise<boolean> {
+  await wasm_wrapper.default().then();
+
+  return wasm_wrapper.is_valid_literal(literal, literalType);
+  //return false;
 }
