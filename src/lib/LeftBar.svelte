@@ -10,7 +10,15 @@ export type Command  = {
 
 <script lang="ts">
 
-const { commands, category, onCategoryClick, onCommandClick } = $props();
+type Props = {
+  commands: Command[] | null,
+  category: 'commands' | 'data',
+  onCategoryClick: (category: 'commands' | 'data') => void,
+  onCommandClick: (index: number) => void,
+  searchValue: unknown
+}
+
+let { commands, category, onCategoryClick, onCommandClick, searchValue = $bindable() }: Props = $props();
 
 </script>
 
@@ -30,9 +38,11 @@ const { commands, category, onCategoryClick, onCommandClick } = $props();
   {/if}
   </header>
 
+  {#if category == 'commands'}
   <search-bar>
+    <input type="text" placeholder="random int" bind:value={searchValue} />
   </search-bar>
-
+  {/if}
 
 
   {#if category == 'commands'}
@@ -110,6 +120,17 @@ const { commands, category, onCategoryClick, onCommandClick } = $props();
 
   command-list > button > span:last-child {
     color: gray;
+  }
+
+  search-bar {
+    display: flex;
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  search-bar > input {
+    flex-grow: 1;
   }
 
 </style>

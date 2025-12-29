@@ -1,7 +1,7 @@
 
 <script lang="ts">
   import { match, P } from 'ts-pattern';
-  import LeftBar from './lib/LeftBar.svelte';
+  import LeftBar, { type Command as LeftBarCommand } from './lib/LeftBar.svelte';
   import CommandUINode from './lib/CommandUINode.svelte';
   import ResultUINode from './lib/ResultUINode.svelte';
   import RunnerBar from './lib/RunnerBar.svelte'
@@ -44,19 +44,34 @@
 
   let runnerText = $state({ type: 'ok', content: ':v'});
 
-  let leftBarCommands: null | any[] = $state(null);
+  let searchBarValue: string = $state('');
 
-  let leftBarCategory = $state('commands');
+  let baseCommands: null | nushell.CommandList = $state(null);
+
+  let leftBarCommands: null | LeftBarCommand[] = $derived.by(() => {
+    if (baseCommands == null) {
+      return null
+    } else {
+      return baseCommands.filter(command => commandMatches(command, searchBarValue)).map(command => ({
+        name: command.name,
+        category: command.category
+      }))
+    }
+  });
+
+  let leftBarCategory: 'commands' | 'data' = $state('commands');
+
 
   // MARK: Initialization
 
   async function init() {
     let commands = await nushell.getNushellCommands();
 
-    leftBarCommands = commands.map((command: any) => ({
-      name: command.name,
-      category: command.category
-    }));
+    baseCommands = commands;
+  }
+  // TODO: move to nushell module
+  function commandMatches(command: nushell.Command, filter: string): boolean {
+    return filter == '' || command.name.includes(filter) || command.category.includes(filter);
   }
 
   init().then();
@@ -93,7 +108,7 @@
       });
   }
 
-  function onCategoryClick(category: string) {
+  function onCategoryClick(category: 'commands' | 'data') {
     leftBarCategory = category;
   }
 
@@ -131,7 +146,9 @@
         commands={leftBarCommands}
         category={leftBarCategory}
         onCategoryClick={onCategoryClick}
-        onCommandClick={onCommandItemClick} />
+        onCommandClick={onCommandItemClick}
+        bind:searchValue={searchBarValue}
+         />
     </Pane>
 
     <PaneResizer style="border: 3px solid gray;" />
