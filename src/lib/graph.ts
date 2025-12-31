@@ -3,7 +3,7 @@ import { type InputTree } from './syntax';
 import * as nushell from './nushell';
 import { match } from 'ts-pattern';
 
-import { panic, type Result, ok, err } from './util';
+import { panic, type Result, ok, err, assert } from './util';
 
 type NodeId = string;
 
@@ -18,6 +18,10 @@ type InputNode =
     literalType: nushell.AtomicLiteralType,
   } |
   {
+    type: 'operator',
+    name: nushell.Operator,
+  } |
+  {
     type: 'result'
   };
 
@@ -26,20 +30,22 @@ type InputNode =
 export class InputGraph {
   private constructor(
     private nodeInfo: Map<NodeId, InputNode>,
-    private sources: Map<NodeId, NodeId[]>
+
+    // xyflow allows us to add a tag/handle to every edge.
+    // we store this information as the string in here
+    private sources: Map<NodeId, [NodeId, string | null][]>
   ) { }
 
   // TODO: add input validation
   static inputGraphFromUIGraph(uiNodes: any, uiEdges: any): InputGraph {
     const nodeInfo: Map<NodeId, InputNode> = new Map();
-    const targets: Map<NodeId, NodeId[]> = new Map();
-    const sources: Map<NodeId, NodeId[]> = new Map();
+
+    const sources: Map<NodeId, [NodeId, string | null][]> = new Map();
 
     for (let uiNode of uiNodes) {
       const node = inputNodeFromUINode(uiNode);
 
       nodeInfo.set(uiNode.id, node);
-      targets.set(uiNode.id, []);
       sources.set(uiNode.id, []);
     }
 
@@ -47,8 +53,9 @@ export class InputGraph {
       let src = edge.source;
       let target = edge.target;
 
-      (targets.get(src) ?? panic('edge node ID not in node list')).push(target);
-      (sources.get(target) ?? panic('edge not ID not in node list')).push(src);
+      const handle = 'targetHandle' in edge ? edge.targetHandle : null;
+
+      (sources.get(target) ?? panic('edge not ID not in node list')).push([src, handle]);
     }
     
     return new InputGraph(nodeInfo,  sources);
@@ -65,7 +72,7 @@ export class InputGraph {
       return err('too many nodes linked to result node');
     }
 
-    let rootID = resultSources[0];
+    let [rootID, _]  = resultSources[0];
 
     return ok(this.dfs(rootID));
   }
@@ -82,10 +89,10 @@ export class InputGraph {
         let graphSources = this.sources.get(root);
 
         if (!graphSources) {
-          panic('root node has no sources');
+          panic('command node is in DFS but has no sources');
         }
 
-        const input = graphSources.length == 0 ? null : this.dfs(graphSources[0]);
+        const input = graphSources.length == 0 ? null : this.dfs(graphSources[0][0]);
 
         return {
           type: 'command',
@@ -99,9 +106,56 @@ export class InputGraph {
         literalType: data.literalType
       })
       )
-      .otherwise(() => {
-        panic('Unexpected root command type')
+      .with({type: 'operator'}, operator => {
+        // TODO: refactor this
+        // TODO: return error in case of invalid operator
+        let graphSources = this.sources.get(root);
+
+        if (!graphSources) {
+          panic('root node has no sources');
+        }
+        if (graphSources.length < 2) {
+          panic('operator node has less than 2 sources');
+        }
+        if (graphSources.length > 2) {
+          panic('operator node has more than 2 sources');
+        }
+
+        const [[id1, handle1], [id2, handle2]] = graphSources;
+
+        if (handle1 == null || handle2 == null) {
+          panic('operator node has edge without handle');
+        }
+
+        // handles for operator are either 'A' or 'B'
+
+        let leftId: NodeId;
+        let rightId: NodeId;
+        
+        if (handle1 == 'A') {
+          assert(handle2 == 'B', 'Inconsistent operator handles');
+
+          leftId = id1;
+          rightId = id2;
+        } else {
+          assert(handle2 == 'A', 'Inconsistent operator handles');
+          assert(handle1 == 'B', 'Inconsistent operator handles');
+
+          leftId = id2;
+          rightId = id1;
+        }
+
+        return {
+          type: 'operator',
+          name: operator.name,
+          left: this.dfs(leftId),
+          right: this.dfs(rightId)
+        }
       })
+      .with({type: 'result'}, () => {
+        panic('Unexpected result root command type')
+      })
+      .exhaustive()
   }
 }
 
@@ -127,6 +181,13 @@ function inputNodeFromUINode(uiNode: any): InputNode  {
       type: 'data',
       literalType: uiNode.data.literalType,
       text:uiNode.data.text
+    }
+  }
+
+  if (uiNode.type == 'operator') {
+    return {
+      type: 'operator',
+      name: uiNode.data.name
     }
   }
 

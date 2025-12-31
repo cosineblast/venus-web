@@ -19,3 +19,13 @@ export function err<T, E>(message: E): Result<T, E>  {
 export function panic(message: string): never {
   throw new Error(message);
 }
+
+export function assert(condition: boolean, message: string | (() => string)): void {
+  if (condition) {
+    return;
+  }
+
+  let userMessage = typeof message == 'string' ? message : message();
+
+  panic(`assertion failed: ${userMessage}`)
+}

@@ -13,8 +13,8 @@
   { data.name }
 </div>
 
-<Handle type="target" position={Position.Top} id="a" style="left: 80%" />
-<Handle type="target" position={Position.Top} id="b" style="left: 20%" />
+<Handle type="target" position={Position.Top} id="A" style="left: 20%" />
+<Handle type="target" position={Position.Top} id="B" style="left: 80%" />
 
 <Handle type="source" position={Position.Bottom} />
 

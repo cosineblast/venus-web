@@ -12,7 +12,13 @@ export type InputTree =
     type: 'data',
     text: string,
     literalType: nushell.AtomicLiteralType
-  }  
+  }  |
+  {
+    type: 'operator',
+    name: nushell.Operator,
+    left: InputTree,
+    right: InputTree
+  }
 
 export type SyntaxTree =
   {
@@ -28,6 +34,11 @@ export type SyntaxTree =
     type: 'literal',
     literalType: nushell.AtomicLiteralType,
     text: string
+  } | {
+    type: 'operator',
+    name: nushell.Operator,
+    left: SyntaxTree,
+    right: SyntaxTree
   };
 
 export namespace InputTree {
@@ -56,7 +67,15 @@ export namespace InputTree {
           literalType: data.literalType,
           text: data.text
         })
-      ).exhaustive();
+      )
+      .with({type: 'operator'}, operator => ({
+          type: 'operator',
+          name: operator.name,
+          left: toSyntaxTree(operator.left),
+          right: toSyntaxTree(operator.right)
+        })
+      )
+      .exhaustive();
 
   }
 }
@@ -87,6 +106,15 @@ export namespace SyntaxTree {
       .with({ type: 'literal'}, literal => {
         // TODO: fail if text is invalid
         output.push(literal.text);
+      })
+      .with({ type: 'operator'}, operator => {
+        output.push('(');
+        render(operator.left, output);
+        output.push(') ');
+        output.push(operator.name)
+        output.push(' (');
+        render(operator.right, output);
+        output.push(')');
       })
       .exhaustive();
   }
