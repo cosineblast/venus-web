@@ -34,15 +34,6 @@
       data: { label: 'Result' },
       type: 'result'
     },
-    {
-      id: 'data',
-      position: { x: 0, y: 0 },
-      data: {
-        text: 10,
-        literalType: 'int'
-       },
-      type: 'data'
-    }
   ]);
 
   let uiEdges = $state.raw([]);
@@ -137,6 +128,19 @@
 
   }
 
+  function onDataOptionClick(name: nushell.AtomicLiteralType, placeholder: string) {
+      uiNodes = [...uiNodes, 
+        { id: self.crypto.randomUUID(),
+          type: 'data',
+          position: { x: 0, y: 0 },
+          data: {
+            text: placeholder,
+            literalType: name
+          },
+        }
+      ];
+  }
+
 
 </script>
 
@@ -148,6 +152,7 @@
         commands={leftBarCommands}
         category={leftBarCategory}
         onCategoryClick={onCategoryClick}
+        onDataOptionClick={onDataOptionClick}
         onCommandClick={onCommandItemClick}
         bind:searchValue={searchBarValue}
          />

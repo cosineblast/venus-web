@@ -1,6 +1,8 @@
 
 <script module lang="ts">
 
+import * as nushell from '../lib/nushell';
+
 export type Command  = {
   name: string,
   category: string
@@ -15,11 +17,44 @@ type Props = {
   category: 'commands' | 'data',
   onCategoryClick: (category: 'commands' | 'data') => void,
   onCommandClick: (index: number) => void,
+  onDataOptionClick: (name: nushell.AtomicLiteralType, placeholder: string) => void,
   searchValue: unknown
 }
 
-let { commands, category, onCategoryClick, onCommandClick, searchValue = $bindable() }: Props = $props();
+let { commands, category, onCategoryClick, onCommandClick, onDataOptionClick, searchValue = $bindable() }: Props = $props();
 
+
+const dataOptions: {name: nushell.AtomicLiteralType, placeholder: string}[] =  [
+      {
+        name: 'int',
+        placeholder: '123'
+      },
+      {
+        name: 'float',
+        placeholder: '3.14'
+      },
+      {
+        name: 'boolean',
+        placeholder: 'true'
+      },
+      {
+        name: 'string',
+        placeholder: '"beep"'
+      },
+      {
+        name: 'duration',
+        placeholder: '2sec'
+      },
+      {
+        name: 'filesize',
+        placeholder: '10mb'
+      },
+      {
+        name: 'datetime',
+        placeholder: '1987-11-14'
+      },
+];
+      
 </script>
 
 <aside>
@@ -64,6 +99,20 @@ let { commands, category, onCategoryClick, onCommandClick, searchValue = $bindab
     Loading command list...
 
     {/if}
+  {/if}
+
+  {#if category == 'data'}
+    <command-list>
+      
+      {#each dataOptions as option (option.name)}
+        <button onclick={() => onDataOptionClick(option.name, option.placeholder)}>
+          <span> {option.name} </span>
+          <span> {option.placeholder} </span>
+        </button>
+      {/each}
+       
+
+    </command-list>
   {/if}
 
 </aside>
