@@ -14,14 +14,15 @@ export type Command  = {
 
 type Props = {
   commands: Command[] | null,
-  category: 'commands' | 'data',
-  onCategoryClick: (category: 'commands' | 'data') => void,
+  category: 'commands' | 'data' | 'operators',
+  onCategoryClick: (category: 'commands' | 'data' | 'operators') => void,
   onCommandClick: (index: number) => void,
   onDataOptionClick: (name: nushell.AtomicLiteralType, placeholder: string) => void,
+  onOperatorOptionClick: (name: nushell.Operator) => void,
   searchValue: unknown
 }
 
-let { commands, category, onCategoryClick, onCommandClick, onDataOptionClick, searchValue = $bindable() }: Props = $props();
+let { commands, category, onCategoryClick, onCommandClick, onDataOptionClick, onOperatorOptionClick, searchValue = $bindable() }: Props = $props();
 
 
 const dataOptions: {name: nushell.AtomicLiteralType, placeholder: string}[] =  [
@@ -54,45 +55,72 @@ const dataOptions: {name: nushell.AtomicLiteralType, placeholder: string}[] =  [
         placeholder: '1987-11-14'
       },
 ];
+
+const operatorOptions: {name: nushell.Operator , placeholder: string}[] =  [
+  { name: "+", placeholder: "Addition" },
+  { name: "-", placeholder: "Subtraction" },
+  { name: "*", placeholder: "Multiplication" },
+  { name: "/", placeholder: "Division" },
+  { name: "//", placeholder: "Floor division" },
+  { name: "mod", placeholder: "Modulo" },
+  { name: "**", placeholder: "Exponentiation (power)" },
+  { name: "==", placeholder: "Equal" },
+  { name: "!=", placeholder: "Not equal" },
+  { name: "<", placeholder: "Less than" },
+  { name: "<=", placeholder: "Less than or equal" },
+  { name: ">", placeholder: "Greater than" },
+  { name: ">=", placeholder: "Greater than or equal" },
+  { name: "=~", placeholder: "Matches regex" },
+  { name: "!~", placeholder: "Matchesn't regex" },
+  { name: "in", placeholder: "Value in list" },
+  { name: "not-in", placeholder: "Value not in list" },
+  { name: "has", placeholder: "List has value" },
+  { name: "not-has", placeholder: "List does not have value" },
+  //{ name: "not", placeholder: "logical not" },
+  { name: "and", placeholder: "Boolean and" },
+  { name: "or", placeholder: "Boolean or" },
+  { name: "xor", placeholder: "Boolean xor" },
+  { name: "bit-or", placeholder: "Bitwise or" },
+  { name: "bit-xor", placeholder: "Bitwise xor" },
+  { name: "bit-and", placeholder: "Bitwise and" },
+  { name: "bit-shl", placeholder: "Bitwise shift left" },
+  { name: "bit-shr", placeholder: "Bitwise shift right" },
+  { name: "starts-with", placeholder: "String starts with" },
+  { name: "ends-with", placeholder: "String ends with" },
+  { name: "++", placeholder: "Append lists" },
+];
       
 </script>
 
 <aside>
   <!-- TODO: Use aria here -->
-
   <nav>
     <button onclick={() => onCategoryClick('commands')}> cmds </button>
     <button onclick={() => onCategoryClick('data')}> data </button>
+    <button onclick={() => onCategoryClick('operators')}> operators </button>
   </nav>
     
-  <header>
   {#if category == 'commands'}
-    Commands
-  {:else}
-    Data
-  {/if}
-  </header>
+    <header> Commands </header>
 
-  {#if category == 'commands'}
-  <search-bar>
-    <input type="text" placeholder="random int" bind:value={searchValue} />
-  </search-bar>
-  {/if}
+    <search-bar>
+      <input type="text" placeholder="random int" bind:value={searchValue} />
+    </search-bar>
 
-
-  {#if category == 'commands'}
     {#if commands != null}
 
-    <command-list>
+    <scroll-container>
+      <command-list>
 
-      {#each commands as command, i (command.name)}
-        <button onclick={() => onCommandClick(i)}>
-          <span> {command.name} </span>
-          <span> {command.category} </span>
-        </button>
-      {/each}
+        {#each commands as command, i (command.name)}
+          <button onclick={() => onCommandClick(i)}>
+            <span> {command.name} </span>
+            <span> {command.category} </span>
+          </button>
+        {/each}
 
-    </command-list>
+      </command-list>
+    </scroll-container>
 
     {:else}
 
@@ -102,17 +130,36 @@ const dataOptions: {name: nushell.AtomicLiteralType, placeholder: string}[] =  [
   {/if}
 
   {#if category == 'data'}
-    <command-list>
-      
-      {#each dataOptions as option (option.name)}
-        <button onclick={() => onDataOptionClick(option.name, option.placeholder)}>
-          <span> {option.name} </span>
-          <span> {option.placeholder} </span>
-        </button>
-      {/each}
-       
+    <header> Data </header>
 
-    </command-list>
+    <scroll-container>
+      <command-list>
+        {#each dataOptions as option (option.name)}
+          <button onclick={() => onDataOptionClick(option.name, option.placeholder)}>
+            <span> {option.name} </span>
+            <span> {option.placeholder} </span>
+          </button>
+        {/each}
+      </command-list>
+
+    </scroll-container>
+  {/if}
+
+  {#if category == 'operators'}
+    <header> Operators </header>
+
+    <scroll-container>
+
+      <command-list>
+      
+        {#each operatorOptions as option (option.name)}
+          <button onclick={() => onOperatorOptionClick(option.name)}>
+            <span> {option.name} </span>
+            <span> {option.placeholder} </span>
+          </button>
+        {/each}
+      </command-list>
+    </scroll-container>
   {/if}
 
 </aside>
@@ -143,13 +190,16 @@ const dataOptions: {name: nushell.AtomicLiteralType, placeholder: string}[] =  [
 
   command-list {
     display: flex;
-    overflow-y: auto;
     padding-left: 10px;
     padding-right: 10px;
     flex-direction: column;
   }
 
-  command-list > button {
+  scroll-container {
+    overflow-y: auto;
+  }
+
+  command-list button {
     display: flex;
     justify-content: space-between;
 
@@ -173,13 +223,17 @@ const dataOptions: {name: nushell.AtomicLiteralType, placeholder: string}[] =  [
 
   search-bar {
     display: flex;
-    border-bottom: 1px solid black;
     margin-bottom: 10px;
     padding-bottom: 10px;
   }
 
   search-bar > input {
     flex-grow: 1;
+  }
+
+  .bottom-border {
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
   }
 
 </style>

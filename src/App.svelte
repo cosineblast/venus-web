@@ -6,6 +6,7 @@
   import CommandUINode from './ui/CommandUINode.svelte';
   import ResultUINode from './ui/ResultUINode.svelte';
   import DataUINode from './ui/DataUINode.svelte';
+  import OperatorUINode from './ui/OperatorUINode.svelte';
 
   import RunnerBar from './ui/RunnerBar.svelte'
   import { PaneGroup, Pane, PaneResizer } from 'paneforge';
@@ -24,6 +25,7 @@
   const nodeTypes: NodeTypes = {
     command: CommandUINode,
     result: ResultUINode,
+    operator: OperatorUINode,
     data: DataUINode
   };
 
@@ -31,9 +33,9 @@
  
   let uiNodes: any = $state.raw([
     { id: 'result',
+      type: 'result',
       position: { x: 0, y: 100 },
       data: { label: 'Result' },
-      type: 'result'
     },
   ]);
 
@@ -57,7 +59,7 @@
     }
   });
 
-  let leftBarCategory: 'commands' | 'data' = $state('commands');
+  let leftBarCategory: 'commands' | 'data' | 'operators' = $state('commands');
 
 
   // MARK: Initialization
@@ -102,7 +104,7 @@
       });
   }
 
-  function onCategoryClick(category: 'commands' | 'data') {
+  function onCategoryClick(category: 'commands' | 'data' | 'operators') {
     leftBarCategory = category;
   }
 
@@ -142,6 +144,16 @@
       ];
   }
 
+  function onOperatorOptionClick(name: nushell.Operator) {
+      uiNodes = [...uiNodes, 
+        { id: self.crypto.randomUUID(),
+          type: 'operator',
+          position: { x: 0, y: 0 },
+          data: { name },
+        }
+      ];
+  }
+
 
 </script>
 
@@ -155,6 +167,7 @@
         onCategoryClick={onCategoryClick}
         onDataOptionClick={onDataOptionClick}
         onCommandClick={onCommandItemClick}
+        onOperatorOptionClick={onOperatorOptionClick}
         bind:searchValue={searchBarValue}
          />
     </Pane>
