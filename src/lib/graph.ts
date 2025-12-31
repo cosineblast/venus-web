@@ -1,9 +1,9 @@
 
-import { type CommandTree } from './syntax';
+import { type InputTree } from './syntax';
 
 type NodeId = string;
 
-type CommandNode =
+type InputNode =
   {
     type: 'command',
     name: string
@@ -12,19 +12,21 @@ type CommandNode =
     type: 'result'
   };
 
-export class CommandGraph {
-  constructor(
-    private nodeInfo: Map<NodeId, CommandNode>,
+//  this type represents the directed graph of the nodes and edges drawn
+//  by the user.
+export class InputGraph {
+  private constructor(
+    private nodeInfo: Map<NodeId, InputNode>,
     private sources: Map<NodeId, NodeId[]>
   ) { }
 
-  static commandGraphFromUIGraph(uiNodes: any, uiEdges: any): CommandGraph {
-    const nodeInfo: Map<NodeId, CommandNode> = new Map();
+  static inputGraphFromUIGraph(uiNodes: any, uiEdges: any): InputGraph {
+    const nodeInfo: Map<NodeId, InputNode> = new Map();
     const targets: Map<NodeId, NodeId[]> = new Map();
     const sources: Map<NodeId, NodeId[]> = new Map();
 
     for (let uiNode of uiNodes) {
-      const node = commandNodeFromUINode(uiNode);
+      const node = inputNodeFromUINode(uiNode);
 
       nodeInfo.set(uiNode.id, node);
       targets.set(uiNode.id, []);
@@ -39,10 +41,10 @@ export class CommandGraph {
       (sources.get(target) ?? panic('edge not ID not in node list')).push(src);
     }
     
-    return new CommandGraph(nodeInfo,  sources);
+    return new InputGraph(nodeInfo,  sources);
   }
 
-  toCommandTree(): CommandTree | { type: 'error', message: string } {
+  toInputTree(): InputTree | { type: 'error', message: string } {
     let resultSources = this.sources.get('result') ?? panic('result node not in graph');
 
     if (resultSources.length == 0) {
@@ -58,9 +60,9 @@ export class CommandGraph {
     return this.dfs(rootID);
   }
   
-  // creates a CommandTree out of a section of a graph, starting at 'root'.
+  // creates a InputTree out of a section of a graph, starting at 'root'.
   // assumes root is in the graph and is a command node
-  private dfs(root: NodeId): CommandTree {
+  private dfs(root: NodeId): InputTree {
     const node = this.nodeInfo.get(root) ?? panic('root not is not in graph!');
 
     if (node.type != 'command') {
@@ -74,7 +76,7 @@ export class CommandGraph {
       panic('root node has no sources');
     }
 
-    let input: CommandTree | null = null;
+    let input: InputTree | null = null;
 
     if (graphSources.length != 0) {
       input = this.dfs(graphSources[0]);
@@ -89,11 +91,11 @@ export class CommandGraph {
 }
 
 
-// Extracts the info of a UI (xyflow as of written) into a CommandNode.
+// Extracts the info of a UI (xyflow as of written) into a InputNode.
 // throws if the data is invalid.
 //
 // TODO: use typebox or zod to validate input
-function commandNodeFromUINode(uiNode: any): CommandNode  {
+function inputNodeFromUINode(uiNode: any): InputNode  {
   if (uiNode.id == 'result' || uiNode.type == 'result') {
     return { type: 'result' }
   }

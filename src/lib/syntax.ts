@@ -1,11 +1,11 @@
 
 import { match, P } from 'ts-pattern';
 
-export type CommandTree =
+export type InputTree =
   {
     type: 'command',
     name: string,
-    input: CommandTree | null
+    input: InputTree | null
   }  
 
 export type SyntaxTree =
@@ -19,8 +19,8 @@ export type SyntaxTree =
     name: string
   };
 
-export namespace CommandTree {
-  export function toSyntaxTree(tree: CommandTree): SyntaxTree {
+export namespace InputTree {
+  export function toSyntaxTree(tree: InputTree): SyntaxTree {
     if (tree.input == null) {
       return {
         type: 'command',

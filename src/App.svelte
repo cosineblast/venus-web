@@ -12,9 +12,9 @@
 
   import { SvelteFlow, Background, type NodeTypes } from '@xyflow/svelte';
 
-  import { CommandGraph } from './lib/graph';
+  import { InputGraph } from './lib/graph';
 
-  import { CommandTree, SyntaxTree } from './lib/syntax';
+  import { InputTree, SyntaxTree } from './lib/syntax';
 
   import * as nushell from './lib/nushell';
 
@@ -72,15 +72,15 @@
   // MARK: Update
 
   async function run() {
-    const graph = CommandGraph.commandGraphFromUIGraph(uiNodes, uiEdges);
-    const commandTree = graph.toCommandTree();
+    const graph = InputGraph.inputGraphFromUIGraph(uiNodes, uiEdges);
+    const commandTree = graph.toInputTree();
 
     match(commandTree)
       .with({type: 'error'}, async (error) => {
         runnerText = { type: 'error', content: error.message };
       })
       .with(P._, async (tree) => {
-        const syntaxTree = CommandTree.toSyntaxTree(tree);
+        const syntaxTree = InputTree.toSyntaxTree(tree);
         const source = SyntaxTree.toNushellSource(syntaxTree);
 
         console.log({ graph });
