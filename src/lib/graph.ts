@@ -3,6 +3,8 @@ import { type InputTree } from './syntax';
 import * as nushell from './nushell';
 import { match } from 'ts-pattern';
 
+import { panic, type Result, ok, err } from './util';
+
 type NodeId = string;
 
 type InputNode =
@@ -52,20 +54,20 @@ export class InputGraph {
     return new InputGraph(nodeInfo,  sources);
   }
 
-  toInputTree(): InputTree | { type: 'error', message: string } {
+  toInputTree(): Result<InputTree, string> {
     let resultSources = this.sources.get('result') ?? panic('result node not in graph');
 
     if (resultSources.length == 0) {
-      return { type: 'error', message: 'no node is linked to the result node'};
+      return err('no node is linked to the result node');
     }
 
     if (resultSources.length > 1) {
-      return { type: 'error', message: 'too many nodes linked to result node'};
+      return err('too many nodes linked to result node');
     }
 
     let rootID = resultSources[0];
 
-    return this.dfs(rootID);
+    return ok(this.dfs(rootID));
   }
   
   // creates a InputTree out of a section of a graph, starting at 'root'.
@@ -131,7 +133,3 @@ function inputNodeFromUINode(uiNode: any): InputNode  {
   panic('unknown ui node type');
 }
 
-// utility function for throw an error as an expression
-function panic(message: string): never {
-  throw new Error(message);
-}

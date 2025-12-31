@@ -19,6 +19,7 @@
   import * as nushell from './lib/nushell';
 
   import '@xyflow/svelte/dist/style.css';
+    import type { Result } from './lib/util';
 
   const nodeTypes: NodeTypes = {
     command: CommandUINode,
@@ -38,7 +39,7 @@
 
   let uiEdges = $state.raw([]);
 
-  let runnerText = $state({ type: 'ok', content: ':v'});
+  let runnerText: Result<string, string> = $state({ type: 'ok', value: ':v'});
 
   let searchBarValue: string = $state('');
 
@@ -77,9 +78,9 @@
 
     match(commandTree)
       .with({type: 'error'}, async (error) => {
-        runnerText = { type: 'error', content: error.message };
+        runnerText = { type: 'error', message: error.message };
       })
-      .with(P._, async (tree) => {
+      .with(P._, async ({value: tree}) => {
         const syntaxTree = InputTree.toSyntaxTree(tree);
         const source = SyntaxTree.toNushellSource(syntaxTree);
 
@@ -88,14 +89,14 @@
         console.log({ syntaxTree });
         console.log({ source });
 
-        runnerText = { type: 'ok' , content: `Running ${source}...`};
+        runnerText = { type: 'ok' , value: `Running ${source}...`};
 
         const result = await nushell.executeNushell(source);
 
         if (result.type == 'ok') {
-          runnerText = { type: 'ok' , content: result.value};
+          runnerText = { type: 'ok' , value: result.value};
         } else {
-          runnerText = { type: 'error', content: result.message };
+          runnerText = { type: 'error', message: result.message };
         }
 
       });

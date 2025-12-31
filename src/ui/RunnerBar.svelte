@@ -1,6 +1,14 @@
 
-<script>
-  let { onRunClick, text } = $props();
+
+<script lang="ts">
+    import type { Result } from "../lib/util";
+
+  type Props = {
+    onRunClick: () => void;
+    text: Result<string, string>
+  };
+
+  let { onRunClick, text }: Props = $props();
 
 </script>
 
@@ -8,10 +16,10 @@
 
   <div class="code-result pt-mono-regular">
     {#if text.type == 'ok'}
-      {text.content}
+      {text.value}
 
     {:else if text.type == 'error'}
-      <span class="error"> {text.content} </span>
+      <span class="error"> {text.message} </span>
     {/if}
   </div>
 
