@@ -1,11 +1,17 @@
 
 import { match, P } from 'ts-pattern';
+import * as nushell from './nushell';
 
 export type InputTree =
   {
     type: 'command',
     name: string,
     input: InputTree | null
+  }  |
+  {
+    type: 'data',
+    text: string,
+    literalType: nushell.AtomicLiteralType
   }  
 
 export type SyntaxTree =
@@ -17,25 +23,41 @@ export type SyntaxTree =
   {
     type: 'command',
     name: string
+  } |
+  {
+    type: 'literal',
+    literalType: nushell.AtomicLiteralType,
+    text: string
   };
 
 export namespace InputTree {
   export function toSyntaxTree(tree: InputTree): SyntaxTree {
-    if (tree.input == null) {
-      return {
-        type: 'command',
-        name: tree.name
-      }
-    } else {
-      return {
-        type: 'pipe',
-        left: toSyntaxTree(tree.input),
-        right: {
-          type: 'command',
-          name: tree.name
+    return match(tree)
+      .returnType<SyntaxTree>()
+      .with({ type: 'command' }, command => {
+        if (command.input == null) {
+          return {
+            type: 'command',
+            name: command.name
+          }
+        } else {
+          return {
+            type: 'pipe',
+            left: toSyntaxTree(command.input),
+            right: {
+              type: 'command',
+              name: command.name
+            }
+          }
         }
-      }
-    }
+      })
+      .with({type: 'data'}, data => ({
+          type: 'literal',
+          literalType: data.literalType,
+          text: data.text
+        })
+      ).exhaustive();
+
   }
 }
 
@@ -61,6 +83,11 @@ export namespace SyntaxTree {
         output.push('(');
         render(pipe.right, output);
         output.push(')');
-      });
+      })
+      .with({ type: 'literal'}, literal => {
+        // TODO: fail if text is invalid
+        output.push(literal.text);
+      })
+      .exhaustive();
   }
 }

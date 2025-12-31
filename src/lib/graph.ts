@@ -1,5 +1,7 @@
 
 import { type InputTree } from './syntax';
+import * as nushell from './nushell';
+import { match } from 'ts-pattern';
 
 type NodeId = string;
 
@@ -7,6 +9,11 @@ type InputNode =
   {
     type: 'command',
     name: string
+  } |
+  {
+    type: 'data',
+    text: string,
+    literalType: nushell.AtomicLiteralType,
   } |
   {
     type: 'result'
@@ -20,6 +27,7 @@ export class InputGraph {
     private sources: Map<NodeId, NodeId[]>
   ) { }
 
+  // TODO: add input validation
   static inputGraphFromUIGraph(uiNodes: any, uiEdges: any): InputGraph {
     const nodeInfo: Map<NodeId, InputNode> = new Map();
     const targets: Map<NodeId, NodeId[]> = new Map();
@@ -65,28 +73,33 @@ export class InputGraph {
   private dfs(root: NodeId): InputTree {
     const node = this.nodeInfo.get(root) ?? panic('root not is not in graph!');
 
-    if (node.type != 'command') {
-      panic('root node is not a command node');
-    }
+    return match(node)
+      .returnType<InputTree>()
+      .with({ type: 'command' }, command => {
+        // for now, commands can only have one input, the pipe input
+        let graphSources = this.sources.get(root);
 
-    // for now, commands can only have one input, the pipe input
-    let graphSources = this.sources.get(root);
+        if (!graphSources) {
+          panic('root node has no sources');
+        }
 
-    if (!graphSources) {
-      panic('root node has no sources');
-    }
+        const input = graphSources.length == 0 ? null : this.dfs(graphSources[0]);
 
-    let input: InputTree | null = null;
-
-    if (graphSources.length != 0) {
-      input = this.dfs(graphSources[0]);
-    }
-
-    return {
-      type: 'command',
-      name: node.name,
-      input
-     }
+        return {
+          type: 'command',
+          name: command.name,
+          input
+        }
+      })
+      .with({ type: 'data' }, data => ({
+        type: 'data',
+        text: data.text,
+        literalType: data.literalType
+      })
+      )
+      .otherwise(() => {
+        panic('Unexpected root command type')
+      })
   }
 }
 
@@ -107,7 +120,15 @@ function inputNodeFromUINode(uiNode: any): InputNode  {
     }
   }
 
-  panic('unknown command type');
+  if (uiNode.type == 'data') {
+    return {
+      type: 'data',
+      literalType: uiNode.data.literalType,
+      text:uiNode.data.text
+    }
+  }
+
+  panic('unknown ui node type');
 }
 
 // utility function for throw an error as an expression
