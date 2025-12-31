@@ -62,6 +62,13 @@ export type UINode = z.infer<typeof UINodeSchema>;
 
 const UINodesSchema = z.array(UINodeSchema);
 
+const UIEdgesSchema = z.array(z.object({
+  source: z.string(),
+  target: z.string(),
+  targetHandle: z.string().optional()
+}));
+
+
 //  this type represents the directed graph of the nodes and edges drawn
 //  by the user.
 export class InputGraph {
@@ -74,8 +81,9 @@ export class InputGraph {
   ) { }
 
   // TODO: add input validation
-  static inputGraphFromUIGraph(uiNodes_: unknown, uiEdges: any): InputGraph {
+  static inputGraphFromUIGraph(uiNodes_: unknown, uiEdges_: unknown): InputGraph {
     const uiNodes = UINodesSchema.parse(uiNodes_);
+    const uiEdges = UIEdgesSchema.parse(uiEdges_);
     
     const nodeInfo: Map<NodeId, InputNode> = new Map();
     const sources: Map<NodeId, [NodeId, string | null][]> = new Map();
@@ -91,8 +99,7 @@ export class InputGraph {
       let src = edge.source;
       let target = edge.target;
 
-      const handle = 'targetHandle' in edge ? edge.targetHandle : null;
-
+      const handle = edge['targetHandle'] != undefined ? edge.targetHandle : null;
       (sources.get(target) ?? panic('edge not ID not in node list')).push([src, handle]);
     }
     
