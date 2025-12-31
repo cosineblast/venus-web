@@ -87,7 +87,11 @@ export namespace SyntaxTree {
     render(tree, result);
     return result.join('');
   }
-
+  // TODO: add .. support
+  // .. is not exactly an operator, but it works
+  // quite like one, except for one syntatical difference:
+  // it must NOT have space before its arguments,
+  // so `1 .. 3` is not valid, but `1..3` is.
   function render(tree: SyntaxTree, output: string[]) {
     match(tree)
       .with({ type: 'command'}, command => { output.push(command.name); })

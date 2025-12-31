@@ -86,7 +86,8 @@ export namespace Command {
   }
 }
 
-export type AtomicLiteralType = 'int' | 'float' | 'string' | 'duration' | 'filesize' | 'boolean' | 'datetime';
+export const AtomicLiteralTypeSchema =  z.enum(['int', 'float', 'string', 'duration', 'filesize', 'boolean', 'datetime'])
+export type AtomicLiteralType = z.infer<typeof AtomicLiteralTypeSchema>;
 
 export async function literalIsOk(literal: string, literalType: AtomicLiteralType): Promise<boolean> {
   await wasm_wrapper.default().then();
@@ -95,34 +96,36 @@ export async function literalIsOk(literal: string, literalType: AtomicLiteralTyp
   //return false;
 }
 
-export type Operator = "+"
-  | "-"
-  | "*"
-  | "/"
-  | "//"
-  | "mod"
-  | "**"
-  | "=="
-  | "!="
-  | "<"
-  | "<="
-  | ">"
-  | ">="
-  | "=~"
-  | "!~"
-  | "in"
-  | "not-in"
-  | "has"
-  | "not-has"
-  // | "not"
-  | "and"
-  | "or"
-  | "xor"
-  | "bit-or"
-  | "bit-xor"
-  | "bit-and"
-  | "bit-shl"
-  | "bit-shr"
-  | "starts-with"
-  | "ends-with"
-  | "++";
+export const OperatorSchema = z.enum(["+"
+  , "-"
+  , "*"
+  , "/"
+  , "//"
+  , "mod"
+  , "**"
+  , "=="
+  , "!="
+  , "<"
+  , "<="
+  , ">"
+  , ">="
+  , "=~"
+  , "!~"
+  , "in"
+  , "not-in"
+  , "has"
+  , "not-has"
+  // , "not"
+  , "and"
+  , "or"
+  , "xor"
+  , "bit-or"
+  , "bit-xor"
+  , "bit-and"
+  , "bit-shl"
+  , "bit-shr"
+  , "starts-with"
+  , "ends-with"
+  , "++"]);
+
+export type Operator = z.infer<typeof OperatorSchema>;

@@ -35,7 +35,7 @@
     { id: 'result',
       type: 'result',
       position: { x: 0, y: 100 },
-      data: { label: 'Result' },
+      data: {},
     },
   ]);
 

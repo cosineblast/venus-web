@@ -5,6 +5,8 @@ import { match } from 'ts-pattern';
 
 import { panic, type Result, ok, err, assert } from './util';
 
+import * as z from 'zod';
+
 type NodeId = string;
 
 type InputNode =
@@ -25,6 +27,41 @@ type InputNode =
     type: 'result'
   };
 
+const UINodeSchema = z.intersection(
+  z.object({
+    id: z.string(),
+    position: z.object({ x: z.number(), y: z.number() }),
+  }),
+
+  z.discriminatedUnion('type', [
+    z.object({ type: z.literal('result'), data: z.object() }),
+    z.object({
+      type: z.literal('command'), data: z.object({
+        label: z.string(),
+        hasInput: z.boolean()
+      })
+    }),
+
+    z.object({
+      type: z.literal('data'), data: z.object({
+        text: z.string(),
+        literalType: nushell.AtomicLiteralTypeSchema,
+      })
+    }),
+
+    z.object({
+      type: z.literal('operator'), data: z.object({
+        name: nushell.OperatorSchema
+      })
+    }),
+  ])
+
+  );
+
+export type UINode = z.infer<typeof UINodeSchema>;
+
+const UINodesSchema = z.array(UINodeSchema);
+
 //  this type represents the directed graph of the nodes and edges drawn
 //  by the user.
 export class InputGraph {
@@ -37,9 +74,10 @@ export class InputGraph {
   ) { }
 
   // TODO: add input validation
-  static inputGraphFromUIGraph(uiNodes: any, uiEdges: any): InputGraph {
+  static inputGraphFromUIGraph(uiNodes_: unknown, uiEdges: any): InputGraph {
+    const uiNodes = UINodesSchema.parse(uiNodes_);
+    
     const nodeInfo: Map<NodeId, InputNode> = new Map();
-
     const sources: Map<NodeId, [NodeId, string | null][]> = new Map();
 
     for (let uiNode of uiNodes) {
@@ -164,7 +202,7 @@ export class InputGraph {
 // throws if the data is invalid.
 //
 // TODO: use typebox or zod to validate input
-function inputNodeFromUINode(uiNode: any): InputNode  {
+function inputNodeFromUINode(uiNode: UINode): InputNode  {
   if (uiNode.id == 'result' || uiNode.type == 'result') {
     return { type: 'result' }
   }
