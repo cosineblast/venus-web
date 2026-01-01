@@ -4,6 +4,7 @@
   import LeftBar, { type Command as LeftBarCommand } from './ui/LeftBar.svelte';
 
   import CommandUINode from './ui/CommandUINode.svelte';
+  import { type Data as CommandUINodeData } from './ui/CommandUINode.svelte';
   import ResultUINode from './ui/ResultUINode.svelte';
   import DataUINode from './ui/DataUINode.svelte';
   import OperatorUINode from './ui/OperatorUINode.svelte';
@@ -31,7 +32,7 @@
 
   // MARK: Model
  
-  let uiNodes: any = $state.raw([
+  let uiNodes = $state.raw([
     { id: 'result',
       type: 'result',
       position: { x: 0, y: 100 },
@@ -118,13 +119,22 @@
 
     let baseCommand = baseCommands.filter(command => command.name == commandName)[0];
 
+    const data: CommandUINodeData =  {
+          label: baseCommand.name,
+          hasInput: nushell.Command.hasInput(baseCommand),
+          parameters: baseCommand.params.map(param => ({
+            name: param.name,
+            required: param.required,
+            isSwitch: param.type == 'switch'
+          })),
+          selectedOptionalParameters: new Set(),
+          enabledSwitches: new Set()
+    };
+
     uiNodes = [...uiNodes, 
       { id: self.crypto.randomUUID(),
         position: { x: 0, y: 0 }, // TODO: find center of viewport
-        data: {
-          label: baseCommand.name,
-          hasInput: nushell.Command.hasInput(baseCommand)
-        },
+        data: data,
         type: 'command'
       }
     ];

@@ -43,7 +43,12 @@ const CommandSchema = z.object({
   category: z.string(),
   command_type: z.string(),
   description: z.string(),
-  params: z.unknown(),
+  params: z.array(z.object({
+    name: z.string(),
+    type: z.string(),
+    required: z.boolean(),
+    description: z.string(),
+  })),
   input_output: z.array(z.object({
     input: z.string(),
     output: z.string()
