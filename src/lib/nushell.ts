@@ -21,18 +21,36 @@ type RawNushellResult = {
   type: 'serialize_failure'
 }
 
+const NushellResultSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('success'), value_json: z.string() }),
+  z.object({ type: z.literal('failure'), error_json: z.string() }),
+  z.object({ type: z.literal('serialize_failure')})
+]);
 
+const NushellErrorSchema  = z.object({
+  msg: z.string(),
+  debug: z.string(),
+  rendered: z.string(),
+});
  
-
 export async function executeNushell(source: string): Promise<Result> {
   await wasm_wrapper.default();
 
   // TODO: use zod
-  const result: RawNushellResult = wasm_wrapper.execute(source);
+  const result: RawNushellResult = NushellResultSchema.parse(wasm_wrapper.execute(source));
 
   return match(result)
     .with({ type: 'serialize_failure' }, () => ({ type: 'error' as const, message: 'Computation succeeded, but the result value cannot be displayed :/'}))
-    .with({ type: 'failure'}, err => ({ type: 'error' as const, message: err.error_json }))
+    .with({ type: 'failure'}, err => {
+
+      const errorValue = NushellErrorSchema.parse(JSON.parse(err.error_json));
+
+      console.log('nushell error:', errorValue);
+
+      return { type: 'error' as const, message:
+        `Error: ${errorValue.msg}\n${errorValue.rendered}`
+      }
+    })
     .with({ type: 'success'}, result => ({type: 'ok' as const, value: JSON.parse(result.value_json)}))
     .exhaustive()
 }
