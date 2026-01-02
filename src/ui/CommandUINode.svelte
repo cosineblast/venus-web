@@ -20,9 +20,10 @@
 </script>
 
 <script lang="ts">
-  import { Handle, Position, type NodeProps, type Node, useSvelteFlow } from '@xyflow/svelte';
+  import { Handle, Position, type NodeProps, type Node, useSvelteFlow, useUpdateNodeInternals } from '@xyflow/svelte';
 
   let { updateNodeData } = useSvelteFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
 
   let { id, data }: NodeProps<Node<Data>> = $props();
 
@@ -78,6 +79,7 @@
     };
 
     updateNodeData(id, newData);
+    updateNodeInternals(id);
   }
 
 </script>
@@ -101,10 +103,11 @@
        </horizontal-section>
 
         <flag-list>
-          {#each data.parameters.filter(param => !param.required) as parameter}
+          {#each data.parameters.filter(param => !param.required) as parameter (parameter.name)}
             <checkbox-container>
               <input
                 type="checkbox"
+                checked={data.enabledSwitches.has(parameter.name) || data.selectedOptionalParameters.has(parameter.name)}
                 onchange={event => onCheckboxChange(parameter, (event.target as HTMLInputElement).checked)}
               /> {parameter.name}
             </checkbox-container>

@@ -12,7 +12,8 @@ type NodeId = string;
 type InputNode =
   {
     type: 'command',
-    name: string
+    name: string,
+    switches: string[]
   } |
   {
     type: 'data',
@@ -38,7 +39,16 @@ const UINodeSchema = z.intersection(
     z.object({
       type: z.literal('command'), data: z.object({
         label: z.string(),
-        hasInput: z.boolean()
+        hasInput: z.boolean(),
+
+        parameters: z.array(z.object({
+          name: z.string(),
+          required: z.boolean(),
+          isSwitch: z.boolean()
+        })),
+
+        selectedOptionalParameters: z.set(z.string()),
+        enabledSwitches: z.set(z.string())
       })
     }),
 
@@ -86,6 +96,8 @@ export class InputGraph {
     const uiEdges = UIEdgesSchema.parse(uiEdges_);
     
     const nodeInfo: Map<NodeId, InputNode> = new Map();
+
+    // TODO: use record instead of pair
     const sources: Map<NodeId, [NodeId, string | null][]> = new Map();
 
     for (let uiNode of uiNodes) {
@@ -99,7 +111,8 @@ export class InputGraph {
       let src = edge.source;
       let target = edge.target;
 
-      const handle = edge['targetHandle'] != undefined ? edge.targetHandle : null;
+      const handle = edge['targetHandle'] == undefined ? null : edge.targetHandle;
+
       (sources.get(target) ?? panic('edge not ID not in node list')).push([src, handle]);
     }
     
@@ -129,20 +142,31 @@ export class InputGraph {
 
     return match(node)
       .returnType<InputTree>()
-      .with({ type: 'command' }, command => {
+      .with({ type: 'command' }, (command): InputTree => {
         // for now, commands can only have one input, the pipe input
-        let graphSources = this.sources.get(root);
+        const graphSources = this.sources.get(root);
 
         if (!graphSources) {
           panic('command node is in DFS but has no sources');
         }
 
-        const input = graphSources.length == 0 ? null : this.dfs(graphSources[0][0]);
+        const inputSource = graphSources.filter(source => source[1] == '$INPUT$');
+        // TODO: save this constant to a constant
+        const input = inputSource.length == 0 ? null : this.dfs(inputSource[0][0]);
+
+        const parameters =
+          graphSources
+          .filter(source => source[1] != '$INPUT$')
+          .map(source => [source[1], this.dfs(source[0])] as [string, InputTree])
+
+        const switches = command.switches;
 
         return {
           type: 'command',
           name: command.name,
-          input
+          input,
+          parameters,
+          switches
         }
       })
       .with({ type: 'data' }, data => ({
@@ -217,7 +241,8 @@ function inputNodeFromUINode(uiNode: UINode): InputNode  {
   if (uiNode.type == 'command') {
     return {
       type: 'command',
-      name: uiNode.data.label
+      name: uiNode.data.label,
+      switches: [...uiNode.data.enabledSwitches]
     }
   }
 

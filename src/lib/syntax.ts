@@ -1,12 +1,15 @@
 
-import { match, P } from 'ts-pattern';
+import { match } from 'ts-pattern';
 import * as nushell from './nushell';
+import { assert } from './util';
 
 export type InputTree =
   {
     type: 'command',
     name: string,
-    input: InputTree | null
+    input: InputTree | null,
+    parameters: [string, InputTree][],
+    switches: string[]
   }  |
   {
     type: 'data',
@@ -28,7 +31,8 @@ export type SyntaxTree =
   } |
   {
     type: 'command',
-    name: string
+    name: string,
+    parameters: [string, SyntaxTree | null][]
   } |
   {
     type: 'literal',
@@ -45,20 +49,26 @@ export namespace InputTree {
   export function toSyntaxTree(tree: InputTree): SyntaxTree {
     return match(tree)
       .returnType<SyntaxTree>()
-      .with({ type: 'command' }, command => {
+      .with({ type: 'command' }, (command): SyntaxTree => {
+        const params: [string,  SyntaxTree | null][] = command.parameters
+            .map(param => [param[0], toSyntaxTree(param[1])] as const);
+
+        const switches: [string,  SyntaxTree | null][] =
+          command.switches.map(it => [it, null]);
+
+        const cmd: SyntaxTree = {
+          type: 'command',
+          name: command.name,
+          parameters: params.concat(switches),
+        }
+
         if (command.input == null) {
-          return {
-            type: 'command',
-            name: command.name
-          }
+          return cmd;
         } else {
           return {
             type: 'pipe',
             left: toSyntaxTree(command.input),
-            right: {
-              type: 'command',
-              name: command.name
-            }
+            right: cmd
           }
         }
       })
@@ -94,7 +104,38 @@ export namespace SyntaxTree {
   // so `1 .. 3` is not valid, but `1..3` is.
   function render(tree: SyntaxTree, output: string[]) {
     match(tree)
-      .with({ type: 'command'}, command => { output.push(command.name); })
+      .with({ type: 'command' }, command => {
+        output.push(command.name);
+
+        for (const [name, value] of command.parameters) {
+          if (name == '...rest') {
+            output.push(' ...')
+
+            if (value != null) {
+              output.push('(');
+              render(value, output);
+              output.push(')');
+            }
+          } else if (name.startsWith('--')) {
+            let flagName = extractFlagName(name);
+            output.push(' --')
+
+            if (flagName != null) {
+              output.push(flagName)
+            }
+
+            if (value != null) {
+              output.push('=(');
+              render(value, output);
+              output.push(')');
+            }
+          } else if (value != null) {
+            output.push(' (')
+            render(value, output);
+            output.push(')');
+          }
+        }
+      })
       .with({ type: 'pipe'}, pipe => {
 
         output.push('(');
@@ -122,4 +163,12 @@ export namespace SyntaxTree {
       })
       .exhaustive();
   }
+}
+
+// nushell returns flag names of the form `--help(-h)`, so we
+// use this function to extract the `-h`.
+function extractFlagName(fullFlagName: string): string | null {
+  const match = fullFlagName.match(/^-*([a-z0-9]+)/i);
+  return match ? match[1] : null;
+  
 }
